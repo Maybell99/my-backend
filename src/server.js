@@ -12,14 +12,14 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS Middleware
-app.use(cors({
-  origin: ["http://localhost:5173", "https://my-app-besi-ventures.netlify.app"],
-  credentials: true
-}));
-
-// Middleware to parse JSON requests
-app.use(express.json());
+// CORS Middleware - You only need one cors call here
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://my-app-besi-ventures.netlify.app"], // Allowed origins
+    credentials: true, // Allow cookies
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+  })
+);
 
 // Mock database with numeric product IDs
 const products = [
@@ -30,7 +30,7 @@ const products = [
 
 // Function to get a product from the mock database
 const getProductFromDatabase = (productId) => {
-  return products.find(product => product.id === parseInt(productId)); // Ensure productId is treated as an integer
+  return products.find((product) => product.id === parseInt(productId)); // Ensure productId is treated as an integer
 };
 
 // API Routes

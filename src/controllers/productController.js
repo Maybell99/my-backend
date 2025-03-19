@@ -8,6 +8,7 @@ const fetchProductData = async () => {
 
   console.log("📡 Fetching data from Google Sheets...");
   const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`);
+  
   if (!response.ok) {
     throw new Error(`Google Sheets API error: ${response.status} ${response.statusText}`);
   }
@@ -17,6 +18,7 @@ const fetchProductData = async () => {
     throw new Error("No products found in the Google Sheet.");
   }
 
+  // Map Google Sheets data to products
   return data.values.map((row, index) => {
     const product = {
       id: row[0] || `prod-${index + 1}`, // Ensure a unique ID
@@ -53,8 +55,10 @@ export const getProductById = async (req, res) => {
 
   try {
     const products = await fetchProductData();
-    const product = products.find(p => p.id === id); // Find the product by ID
-
+    
+    // Ensure that both `id` and `product.id` are the same type (string in this case)
+    const product = products.find(p => p.id === String(id)); // Compare as string to avoid type mismatch
+    
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
