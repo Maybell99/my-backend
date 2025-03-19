@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
 
-export const getProducts = async (req, res) => {
+export const getProductById = async (req, res) => {
+  const { id } = req.params; // Get the product ID from the URL
+
   try {
     const SHEET_ID = "117z_ENHBb1dE2fuwiBHVF3eLMCm1Xvh8jCyeuVch-as";
     const API_KEY = "AIzaSyAAVJfx43FADGwxOBIfhfbOvw_DgwpQT3U";
@@ -30,11 +32,18 @@ export const getProducts = async (req, res) => {
       rating: row[7] ? Math.min(5, Math.max(0, parseFloat(row[7]))) : 0,
     }));
 
-    console.log("✅ Successfully fetched products:", products.length);
-    res.json({ success: true, products });
+    // Find the product by ID
+    const product = products.find(p => p.id === id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    console.log("✅ Successfully fetched product:", product);
+    res.json({ success: true, product });
 
   } catch (error) {
-    console.error("🔥 Error fetching products:", error);
+    console.error("🔥 Error fetching product:", error);
     res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
