@@ -29,24 +29,16 @@ const fetchProductData = async () => {
     }
 
     // Map Google Sheets data to products
-    return data.values.map((row, index) => {
-      const productId = row[0]?.trim() || `prod-${index + 1}`; // Extract ID separately
-
-      const product = {
-        id: productId, // Assign extracted ID here
-        name: row[1]?.trim() || "Unnamed Product",
-        price: row[2] ? parseFloat(row[2]) : 0,
-        category: row[3]?.trim() || "Uncategorized",
-        description: row[4]?.trim() || "No description available",
-        imageUrl: row[5]?.trim() || "https://via.placeholder.com/150",
-        stock: row[6] ? Math.max(0, parseInt(row[6], 10)) : 0,
-        rating: row[7] ? Math.min(5, Math.max(0, parseFloat(row[7]))) : 0,
-      };
-
-      console.log(`✅ Product mapped: ${product.id} - ${product.name}`); // Log ID separately
-      return product;
-    });
-
+    return data.values.map((row, index) => ({
+      id: row[0]?.trim() || `${index + 1}`, // Ensure ID is a number
+      name: row[1]?.trim() || "Unnamed Product",
+      price: row[2] ? parseFloat(row[2]) : 0,
+      category: row[3]?.trim() || "Uncategorized",
+      description: row[4]?.trim() || "No description available",
+      imageUrl: row[5]?.trim() || "https://via.placeholder.com/150",
+      stock: row[6] ? Math.max(0, parseInt(row[6], 10)) : 0,
+      rating: row[7] ? Math.min(5, Math.max(0, parseFloat(row[7]))) : 0,
+    }));
   } catch (error) {
     console.error("🔥 Error fetching product data:", error);
     throw error;
@@ -54,7 +46,7 @@ const fetchProductData = async () => {
 };
 
 // Get all products
-export const getProducts = async (req, res) => {
+export async function getProducts(req, res) {
   console.log("📡 Fetching all products...");
 
   try {
@@ -62,30 +54,34 @@ export const getProducts = async (req, res) => {
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error("🔥 Error fetching products:", error);
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
-};
+}
 
 // Get product by ID
-export const getProductById = async (req, res) => {
-  const { id } = req.params; // Get the product ID from the URL
-  console.log(`📡 Fetching product by ID: ${id}`); // Log the incoming product ID
+export async function getProductById(req, res) {
+  const { id } = req.params;
+  console.log(`📡 Fetching product by ID: ${id}`);
 
   try {
     const products = await fetchProductData();
-    
-    // Ensure that both `id` and `product.id` are the same type (string in this case)
-    const product = products.find(p => String(p.id) === String(id)); // Compare as string to avoid type mismatch
-    
+    const product = products.find((p) => String(p.id) === String(id)); // Ensure ID comparison
+
     if (!product) {
       console.warn(`⚠️ Product not found: ID ${id}`);
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
     console.log("✅ Successfully fetched product:", product);
     res.status(200).json({ success: true, product });
   } catch (error) {
     console.error("🔥 Error fetching product:", error);
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
-};
+}
