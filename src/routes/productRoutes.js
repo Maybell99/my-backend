@@ -1,10 +1,15 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url";
 import { getProducts, getProductById } from "../controllers/productController.js";
 
 const router = express.Router();
 
-// Serve images from the 'uploads' directory
+// Manually define __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ✅ Serve images from the 'uploads' directory
 router.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Get all products
