@@ -14,7 +14,12 @@ const fetchProductData = async () => {
   }
 
   const data = await response.json();
-  if (!data.values || data.values.length === 0) {
+  
+  if (!data.values || !Array.isArray(data.values)) {
+    throw new Error("No valid array found in Google Sheets data.");
+  }
+
+  if (data.values.length === 0) {
     throw new Error("No products found in the Google Sheet.");
   }
 
@@ -57,7 +62,7 @@ export const getProductById = async (req, res) => {
     const products = await fetchProductData();
     
     // Ensure that both `id` and `product.id` are the same type (string in this case)
-    const product = products.find(p => p.id === String(id)); // Compare as string to avoid type mismatch
+    const product = products.find(p => String(p.id) === String(id)); // Compare as string to avoid type mismatch
     
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
