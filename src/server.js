@@ -13,21 +13,40 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS Middleware
-app.use(cors({ 
-  origin: ["http://localhost:5173", "https://my-app-besi-ventures.netlify.app"], 
+app.use(cors({
+  origin: ["http://localhost:5173", "https://my-app-besi-ventures.netlify.app"],
   credentials: true
 }));
 
 // Middleware to parse JSON requests
 app.use(express.json());
 
+// Mock database with numeric product IDs
+const products = [
+  { id: 1, name: "Product 1", price: 100 },
+  { id: 2, name: "Product 2", price: 200 },
+  // Add more products as needed
+];
+
+// Function to get a product from the mock database
+const getProductFromDatabase = (productId) => {
+  return products.find(product => product.id === parseInt(productId)); // Ensure productId is treated as an integer
+};
+
 // API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
 
-// Default Route
-app.get("/", (req, res) => {
-  res.send("✅ API is running...");
+// Route to fetch product by ID
+app.get('/api/products/:productId', (req, res) => {
+  const { productId } = req.params;
+  console.log(`Requested product ID: ${productId}`);
+
+  const product = getProductFromDatabase(productId); // Fetch the product by ID
+  if (!product) {
+    return res.status(404).json({ message: 'Product not found' });
+  }
+  res.json(product); // Return the product if found
 });
 
 // Start Server
