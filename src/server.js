@@ -1,7 +1,8 @@
-import dotenv from "dotenv";
 import express from "express";
+import dotenv from "dotenv";
 import cors from "cors";
 
+// Load environment variables
 dotenv.config();
 
 // Import Routes
@@ -12,43 +13,29 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS Middleware
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "https://my-app-besi-ventures.netlify.app"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+// Middleware
+app.use(express.json());
+app.use(cors());
 
-// Mock Database
-const products = [
-  { id: 1, name: "Product 1", price: 100 },
-  { id: 2, name: "Product 2", price: 200 },
-];
+// Log when routes are loaded
+console.log("✅ Product routes loaded at /api/products");
+console.log("✅ Payment routes loaded at /api/payment");
 
-// Function to Get Product by ID
-const getProductFromDatabase = (productId) => {
-  return products.find((product) => product.id === parseInt(productId));
-};
-
-// API Routes
+// Register API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
 
-// Route to Fetch Product by ID
-app.get("/api/products/:productId", (req, res) => {
-  const { productId } = req.params;
-  console.log(`🔍 Requested product ID: ${productId}`);
-
-  const product = getProductFromDatabase(productId);
-  if (!product) {
-    return res.status(404).json({ message: "❌ Product not found" });
-  }
-  res.json(product);
+// Default route to check if server is running
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
 });
 
-// Start Server (Listening on 0.0.0.0 for Render Deployment)
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// Handle unknown routes (404)
+app.use((req, res) => {
+  res.status(404).json({ error: "Route Not Found" });
+});
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
