@@ -2,53 +2,83 @@ import axios from "axios";
 import dotenv from "dotenv";
 
 dotenv.config();
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET;
+
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+
+if (!PAYSTACK_SECRET_KEY) {
+  console.error("🚨 PAYSTACK_SECRET_KEY is missing! Check your environment variables.");
+}
 
 async function initiateCheckout(req, res) {
   try {
+    console.log("🔥 Received Data:", req.body);
+
     const { email, amount, name, address, product_id, quantity } = req.body;
 
     if (!email || !amount || !name || !address || !product_id || !quantity) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
+    console.log("✅ Initiating Paystack Payment for:", email, "Amount:", amount);
+
     const paystackResponse = await axios.post(
       "https://api.paystack.co/transaction/initialize",
       {
         email,
-        amount, // Paystack requires amount in kobo
+        amount: amount * 100, // Convert to kobo
         currency: "GHS",
-        callback_url: "http://localhost:5173/order-success",
-        metadata: {
-          name,
-          address,
-          product_id,
-          quantity,
-        },
+        callback_url: "https://my-app-besi-ventures.netlify.app/order-success",
+        metadata: { name, address, product_id, quantity },
       },
       {
         headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET}`,
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
           "Content-Type": "application/json",
         },
       }
     );
 
+    console.log("✅ Payment Initialized Successfully:", paystackResponse.data);
+
     return res.json(paystackResponse.data);
   } catch (error) {
-    console.error("Payment initialization failed:", error);
-    res.status(500).json({ error: "Payment initialization failed" });
+    console.error("❌ Payment initialization failed:", error.response?.data || error.message);
+    res.status(500).json({ error: error.response?.data || "Payment initialization failed" });
   }
 }
 
 async function verifyPayment(req, res) {
   try {
-    // Your payment verification logic
+    const { reference } = req.body;
+
+    if (!reference) {
+      return res.status(400).json({ error: "Payment reference is required" });
+    }
+
+    console.log("🔍 Verifying Paystack Payment:", reference);
+
+    const paystackResponse = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
+
+    const paymentStatus = paystackResponse.data.data.status;
+
+    if (paymentStatus === "success") {
+      console.log("✅ Payment Verified Successfully");
+      return res.json({ success: true, message: "Payment verified successfully" });
+    } else {
+      console.error("❌ Payment verification failed:", paystackResponse.data);
+      return res.status(400).json({ error: "Payment verification failed" });
+    }
   } catch (error) {
-    console.error("Payment verification failed:", error);
-    res.status(500).json({ error: "Payment verification failed" });
+    console.error("❌ Payment verification error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Payment verification error" });
   }
 }
 
-// Ensure you use named exports correctly
 export { initiateCheckout, verifyPayment };

@@ -2,10 +2,21 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
-import { fileURLToPath } from "url"; // Import this
+import { fileURLToPath } from "url";
 
-// Load environment variables
-dotenv.config();
+// Fix __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from .env in the root directory
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
+// Check if PAYSTACK_SECRET_KEY is loaded
+if (!process.env.PAYSTACK_SECRET_KEY) {
+  console.error("🚨 PAYSTACK_SECRET_KEY is missing! Check your .env file.");
+  
+}
+console.log("✅ PAYSTACK_SECRET_KEY loaded successfully!");
 
 // Import Routes
 import productRoutes from "./routes/productRoutes.js";
@@ -14,10 +25,6 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 // Initialize Express App
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Define __dirname manually for ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Debugging Middleware - Logs all incoming requests
 app.use((req, res, next) => {
@@ -41,6 +48,7 @@ app.use(
 
 // Middleware to parse JSON
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // ✅ Serve static files from 'uploads'
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -55,7 +63,7 @@ app.use("/api/checkout", checkoutRoutes);
 // ✅ Debug all registered routes
 console.log("\n🔹 Debugging Registered Routes:");
 app._router.stack.forEach((middleware) => {
-  if (middleware.route) { 
+  if (middleware.route) {
     console.log(`✅ Route registered: ${middleware.route.path}`);
   } else if (middleware.name === "router") {
     middleware.handle.stack.forEach((handler) => {
