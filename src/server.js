@@ -4,19 +4,20 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Fix __dirname for ES modules
+// Fix for __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from .env in the root directory
+// Load environment variables after __dirname is set
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // Check if PAYSTACK_SECRET_KEY is loaded
 if (!process.env.PAYSTACK_SECRET_KEY) {
   console.error("🚨 PAYSTACK_SECRET_KEY is missing! Check your .env file.");
-  
+  process.exit(1);
 }
-console.log("✅ PAYSTACK_SECRET_KEY loaded successfully!");
+
+console.log("✅ PAYSTACK_SECRET_KEY loaded:", process.env.PAYSTACK_SECRET_KEY ? "Yes" : "No");
 
 // Import Routes
 import productRoutes from "./routes/productRoutes.js";
@@ -25,16 +26,6 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 // Initialize Express App
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Debugging Middleware - Logs all incoming requests
-app.use((req, res, next) => {
-  console.log("Incoming Request:");
-  console.log("Origin:", req.headers.origin || "No Origin");
-  console.log("Method:", req.method);
-  console.log("Path:", req.path);
-  console.log("Headers:", req.headers);
-  next();
-});
 
 // CORS Middleware
 app.use(
@@ -50,29 +41,12 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Serve static files from 'uploads'
+// Serve static files from 'uploads'
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Register API Routes
-console.log("✅ Product routes loaded at /api/products");
-console.log("✅ Payment routes loaded at /api/checkout");
-
+// Register API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/checkout", checkoutRoutes);
-
-// ✅ Debug all registered routes
-console.log("\n🔹 Debugging Registered Routes:");
-app._router.stack.forEach((middleware) => {
-  if (middleware.route) {
-    console.log(`✅ Route registered: ${middleware.route.path}`);
-  } else if (middleware.name === "router") {
-    middleware.handle.stack.forEach((handler) => {
-      if (handler.route) {
-        console.log(`✅ Route registered: ${handler.route.path}`);
-      }
-    });
-  }
-});
 
 // Default route to check if the server is running
 app.get("/", (req, res) => {
