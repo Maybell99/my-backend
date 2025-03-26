@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import productRoutes from "./routes/productRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js";
 
 // Fix for __dirname in ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -20,8 +22,7 @@ if (!process.env.PAYSTACK_SECRET_KEY) {
 console.log("✅ PAYSTACK_SECRET_KEY loaded:", process.env.PAYSTACK_SECRET_KEY ? "Yes" : "No");
 
 // Import Routes
-import productRoutes from "./routes/productRoutes.js";
-import checkoutRoutes from "./routes/checkoutRoutes.js";
+
 
 // Initialize Express App
 const app = express();
